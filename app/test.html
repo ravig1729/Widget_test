@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://js.zohostatic.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <style>
+      li {
+        color: rgb(102, 42, 198);
+        width: 250px;
+        height: 120px;
+        background-color: rgb(212, 245, 234);
+        margin: 10px;
+        display: inline-block;
+        box-shadow: 2px 2px 4px grey;
+        border: 1px solid rgb(222, 127, 127);
+        position: relative;
+        padding: 10px;
+        box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+      }
+      li:hover {
+        cursor: pointer;
+        box-shadow: 0.2s ease-in-out, top 0.2s ease-in-out;
+        transition: box-shadow 0.2s ease-in-out, top 0.2s ease-in-out;
+      }
+      li button {
+        border-radius: 6px;
+        background-color: rgb(106, 106, 219);
+        color: white;
+        margin-top: 10px;
+        padding: 5px;
+        padding-left: 3px;
+        padding-right: 3px;
+      }
+      .container{
+        display: grid;
+        grid-template-columns: 75% 25%;
+        grid-gap: 10px;
+      }
+      input[type='text']{
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        box-sizing: border-box;
+      }
+      
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="root"></div>
+      <div id="formArea"></div>
+  </div>
+
+    <script>
+      
+        let ZOHO_INITILIZE = ZOHO.CREATOR.init();
+        let ZOHO_API = ZOHO.CREATOR.API;
+
+        const deletecard = (id) => {
+          
+          const deleteConfig = {
+            appName: "Students",
+            reportName: "StudentReport",
+            criteria: `ID == ${id}`,
+          };
+
+          //delete record API
+            ZOHO_INITILIZE.then(function(){
+                ZOHO_API.deleteRecord(deleteConfig).then(function (response) {                
+                renderStudents();
+              }).catch((err) => {
+                console.log("err in deleteRecord block", err);
+              });
+
+          });
+          
+        };
+
+        const updateCard = (id) => {
+          const config = {
+            appName: "Students",
+            reportName: "StudentReport",
+            id: id,
+          };
+
+          let data = {};
+          ZOHO_INITILIZE.then(function () {
+            ZOHO_API.getRecordById(config)
+              .then(function (response) {
+                data = response.data;
+              })
+              .then(function () {
+                let form = "";
+
+                form += '<form method="POST" id="updateForm">';
+                form += '<input type="text" name="FirstName" value="' +data.FirstName +'" placeholder="First Name" />';
+                form += '<input type="text" name="LastName" value="' +data.LastName +'" placeholder="Last Name" />';
+                form += '<input type="text" name="Birthdate" value="' +data.Birthdate +'" placeholder="Birth Date" />';
+                form += '<input type="submit" />';
+                form += "</form><button class='cancelForm'>Cancel</button>";
+
+                document.getElementById("formArea").innerHTML = form;
+
+                
+                $(".cancelForm").click(function(){                  
+                  addCard();
+                });
+
+                $("form#updateForm").submit(function (e) {
+                  e.preventDefault();
+
+                  let record = {};
+                  let formData = $(this).serializeArray();
+
+                  formData.forEach((item) => {
+                    record[item.name] = item.value;
+                  });
+
+                  config['data'] = {data: record};
+
+                  ZOHO_INITILIZE.then(function () {
+                    
+                    ZOHO_API.updateRecord(config)
+                      .then(function (response) {
+                        if (response.code == 3000) {
+                          alert("Record Updated");
+                          renderStudents();
+                          addCard();
+                        }
+                      })
+                      .catch((err) => console.log(err));
+                  });
+                });
+              });
+          });
+        };
+
+
+
+        const addCard = () => {
+
+          let form = "";
+              form += '<form method="POST" id="updateForm">';
+                form +='<input type="text" name="Student_ID" placeholder="Student ID" />';  
+              form +='<input type="text" name="FirstName" placeholder="First Name" />';
+              form +='<input type="text" name="LastName" placeholder="Last Name" />';
+              form +='<input type="text" name="Birthdate" placeholder="Date of Birth (format dd-mm-yyyy)" />';
+              form +='<input type="text" name="Grade" placeholder="Grade" />';
+              form +='<input type="text" name="Mentor" placeholder="Mentor" />';
+              form += '<input type="submit" />';
+              form += "</form><button class='cancelForm'>Cancel</button>";
+              document.getElementById("formArea").innerHTML = form;
+
+                $("form#updateForm").submit(function (e) {
+                  e.preventDefault();
+                  let record = {};
+                  let formData = $(this).serializeArray();
+
+                  formData.forEach((item) => {
+                    record[item.name] = item.value;
+                  });
+                  const config = { formName: "Add_Student", data:{ data:record}};
+                  
+                  ZOHO_INITILIZE.then(function(){                    
+                    ZOHO_API.addRecord(config).then(function (response) {
+                        if (response.code == 3000) {
+                          alert("Record Added");
+                          renderStudents();
+                          addCard();
+                        }
+                      }).catch((err) => console.log(err));
+                  });
+
+
+                });
+
+        };
+
+
+
+
+
+
+
+
+
+
+
+
+      //   //GET SPECIFIED BY ID
+      //   var inputValue = document.getElementById("myTextInputID").value;
+      //   const getSpecified = (id) => {
+      //     console.log("id", id);
+      //     const getSpecifiedConfig = {
+      //       appName: "Students",
+      //       reportName: "StudentReport",
+      //       id: `${id}`,
+      //     };
+        
+      //     ZOHO_INITILIZE.then(function () {
+      //       ZOHO_API.getRecordById(getSpecifiedConfig).then(function (response) {
+      //         return response.data;
+      //       });
+      //     });
+        
+      // }
+
+        const renderStudents = () => {
+
+          ZOHO_INITILIZE.then(function(){
+
+            const config = {reportName: "StudentReport" };
+
+              ZOHO.CREATOR.API.getAllRecords(config).then(function (response) {
+                  
+                  let str = '';
+                  str +='<button class="cancelForm">Add</button>';
+                  str += "<ul  class='students' type='none'>";
+                  
+                  response.data.forEach(function (student) {
+                    str +=
+                      "<li class='card' type ='none'> Name : " +
+                      student.FirstName+" " + student.LastName +
+                      "<br>" +
+                      "<hr>";
+                    str += " Date of Birth : " + student.Birthdate + "<br>";
+                    str +=
+                      "&nbsp &nbsp &nbsp <button class='update' data-id='" +
+                      student.ID +
+                      "'> Update </button> &nbsp &nbsp &nbsp &nbsp ";
+                    str +=
+                      "<button class='delete' data-id='" +
+                      student.ID +
+                      "' > Delete </button> </li>";
+                  });
+                  str += "</ul>";
+
+                  document.getElementById("root").innerHTML = str;
+
+                  
+                $(".cancelForm").click(function(){
+                  addCard();
+                });
+
+                  $("button.delete").click(function () {                    
+                    deletecard($(this).attr("data-id"));
+                  });
+
+                  $("button.update").click(function () {                    
+                    updateCard($(this).attr("data-id"));
+                  });
+                })
+                .catch((err) => console.log("err in getAllRecords block", err));
+
+          });        
+        };        
+        renderStudents();
+        addCard();
+    </script>
+  </body>
+</html>
+
+
+
+<!-- Date_of_Birth: "27-Jun-1990"
+ID: "155639000000004199"
+Mentor: "Priya"
+Name:
+display_value: "Mara P"
+first_name1: "Mara"
+last_name1: "P"
+prefix1: ""
+suffix1: "" -->
